@@ -269,8 +269,8 @@ int main(int argc, char **argv) {
     // création d'un param master qui contiendra le nombre de bloc, le nombre de worker
 	Param_master *param_master = malloc(sizeof (Param_master));
 
-	param_master->workers= 3;  // définit le nombre de thread worker
-	param_master->Nbblocks=200;  // définit le nombre de bloc
+	param_master->workers= atoi(argv[1]);  // définit le nombre de thread worker
+	param_master->Nbblocks=atoi(argv[2]);  // définit le nombre de bloc
 	param_master->p = &r;
     param_master->colmap = &colmap;
     param_master->surface = surface;

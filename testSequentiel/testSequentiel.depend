@@ -351,3 +351,12 @@
 
 1380758304 c:\program files (x86)\codeblocks\mingw\include\semaphore.h
 
+1447246328 source:c:\users\damien.gygi\documents\programmation concurrente\mandelbrot\testsequentiel\gfx.c
+	"gfx.h"
+
+1447402122 c:\users\damien.gygi\documents\programmation concurrente\mandelbrot\testsequentiel\gfx.h
+	<unistd.h>
+	<time.h>
+	<stdbool.h>
+	<SDL/SDL.h>
+
