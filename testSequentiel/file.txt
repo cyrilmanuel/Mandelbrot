@@ -1,1 +1,1 @@
-Il faut 3525 ms pour calculer le total
+Il faut 3218 ms pour calculer le total

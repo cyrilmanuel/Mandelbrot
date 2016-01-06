@@ -330,3 +330,24 @@
 1341003174 c:\program files (x86)\codeblocks\mingw\include\math.h
 	<_mingw.h>
 
+1452100651 source:c:\users\jc\desktop\programmation_concurente\labos\mandelbrot\testsequentiel\gfx.c
+	"gfx.h"
+
+1452100651 c:\users\jc\desktop\programmation_concurente\labos\mandelbrot\testsequentiel\gfx.h
+	<unistd.h>
+	<time.h>
+	<stdbool.h>
+	<SDL/SDL.h>
+
+1452102395 source:c:\users\jc\desktop\programmation_concurente\labos\mandelbrot\testsequentiel\mandelbrot_seq.c
+	"gfx.h"
+	<pthread.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<time.h>
+	<math.h>
+	<semaphore.h>
+
+1380758304 c:\program files (x86)\codeblocks\mingw\include\semaphore.h
+

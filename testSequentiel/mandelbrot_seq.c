@@ -14,6 +14,7 @@
 #include <string.h>
 #include <time.h>
 #include <math.h>
+#include <semaphore.h>
 
 // Size of the window
 #define WIDTH 1280
@@ -54,20 +55,21 @@ struct Param_worker {
 };
 typedef struct Param_worker Param_worker;
 
-int shared_index = 0;
+int  CountBlock= 0;
 
 pthread_mutex_t lock;
+sem_t mutex;
 
 int getIndex(int blocks) {
-    pthread_mutex_lock(&lock);
-    int tmp = shared_index;
-    if (shared_index < blocks) {
-	printf("%d -- ", shared_index);
-	shared_index++;
-	pthread_mutex_unlock(&lock);
+    sem_wait(&mutex);
+    int tmp = CountBlock;
+    if (CountBlock < blocks) {
+	printf("%d -- ", CountBlock);
+	CountBlock++;
+    sem_post(&mutex);
         return tmp;
     }
-    pthread_mutex_unlock(&lock);
+    sem_post(&mutex);
     return tmp;
 }
 /**
@@ -169,7 +171,7 @@ void *mandelbrot(void *arg) {
         {
             gfx_present(data_mand->surface);
 			if (gfx_is_esc_pressed()) {
-				return;
+				break;
 			}
         }
 
@@ -182,7 +184,7 @@ void* master_func(void *arg) {
 
     Param_master *data = (Param_master*) arg;
 
-    shared_index = 0;
+    CountBlock = 0;
 
     Param_worker data_worker;
     data_worker.p = data->p;// on remplis le parametre Params_t par celui initialiser plus haut (p)
@@ -203,7 +205,7 @@ void* master_func(void *arg) {
         // join des threads workers
         pthread_join(thread_worker[i],NULL);
     }
-    //Liberation de la mémoier
+    //Liberation de la mémoir
     free(thread_worker);
 
         FILE *stream ;
@@ -213,7 +215,6 @@ void* master_func(void *arg) {
     printf("Il faut %d ms pour calculer le total",temps);
     stream = freopen("CON", "w", stdout);
     printf("Il faut %d ms pour calculer le total",temps);
-    //system("PAUSE");
 }
 /**
  * Program's entry point.
@@ -262,19 +263,21 @@ int main(int argc, char **argv) {
 
 
 
+    sem_init(&mutex, 0, 1); // initialisation du semaphore
     pthread_t thread_master; // thread master
 
     // création d'un param master qui contiendra le nombre de bloc, le nombre de worker
 	Param_master *param_master = malloc(sizeof (Param_master));
 
-	param_master->workers= 2;  // définit le nombre de thread worker
-	param_master->Nbblocks=100;  // définit le nombre de bloc
+	param_master->workers= 3;  // définit le nombre de thread worker
+	param_master->Nbblocks=200;  // définit le nombre de bloc
 	param_master->p = &r;
     param_master->colmap = &colmap;
     param_master->surface = surface;
 
     pthread_create(&thread_master,NULL,master_func,param_master);
     pthread_join(thread_master,NULL);
+
 
     gfx_present(surface);
     system("PAUSE");
