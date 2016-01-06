@@ -37,16 +37,6 @@ struct colormap_st {
 };
 typedef struct colormap_st colormap_t;
 
-
-struct Param_worker {
-    int id;
-    int NbBloc;
-    params_t *p;
-    SURFACE *surface;
-    colormap_t *colmap;
-};
-typedef struct Param_worker Param_worker;
-
 struct Param_master {
     int workers;
     int Nbblocks;
@@ -56,7 +46,13 @@ struct Param_master {
 };
 typedef struct Param_master Param_master;
 
-
+struct Param_worker {
+    int NbBloc;
+    params_t *p;
+    SURFACE *surface;
+    colormap_t *colmap;
+};
+typedef struct Param_worker Param_worker;
 
 int shared_index = 0;
 
@@ -156,7 +152,7 @@ void *mandelbrot(void *arg) {
 		y += dy;
 
 		// Every 32 lines: present surface to screen and check keyboard
-		if (i % 32 == 0) {
+            if (i % 32 == 0) {
 			gfx_present(data_mand->surface);
 			if (gfx_is_esc_pressed()) {
 				return;
@@ -168,12 +164,14 @@ void *mandelbrot(void *arg) {
 	}*/
         blocID = getIndex(data_mand->NbBloc);
     }
-    system("PAUSE");
+    //system("PAUSE");
 }
+
 void* master_func(void *arg) {
 
     Param_master *data = (Param_master*) arg;
 
+    shared_index = 0;
     // Tab creation of data_worker base on a struct
     Param_worker data_worker;
     data_worker.p = data->p; // we send his Params_st
@@ -181,8 +179,8 @@ void* master_func(void *arg) {
     data_worker.surface = data->surface; // and the surface
     data_worker.NbBloc=data->Nbblocks;
     // Memory for workers' thread
-    pthread_t *thread_worker = (pthread_t*) malloc(data->workers * sizeof (pthread_t));    // Creation of thread workers
 
+    pthread_t *thread_worker = (pthread_t*) malloc(data->workers * sizeof (pthread_t));    // Creation of thread workers
 	int i;
     for(i=0;i<data->workers;i++)
     {
@@ -195,6 +193,8 @@ void* master_func(void *arg) {
     }
     //free(thread_worker);
 
+
+    free(thread_worker);
 }
 /**
  * Program's entry point.
@@ -203,6 +203,9 @@ void* master_func(void *arg) {
  * @return status code.
  */
 int main(int argc, char **argv) {
+    int n;
+    printf("Entrer un nombre de thread");
+    scanf("%d", n);
 	colormap_t colmap;
     create_colormap(&colmap);
 
@@ -242,18 +245,16 @@ int main(int argc, char **argv) {
 
 	*/
     pthread_t thread_master;
-	int NBloc=10;
-	int NBWorker=5;
 
 	Param_master *param_master = malloc(sizeof (Param_master));
 
-	param_master->workers= NBWorker;
-	param_master->Nbblocks=NBloc;
+	param_master->workers= 2;
+	param_master->Nbblocks=10;
 	param_master->p = &p;
     param_master->colmap = &colmap;
     param_master->surface = surface;
 
-    pthread_create(&thread_master,NULL,mandelbrot,param_master);
+    pthread_create(&thread_master,NULL,master_func,param_master);
     pthread_join(thread_master,NULL);
 
 	gfx_close();
