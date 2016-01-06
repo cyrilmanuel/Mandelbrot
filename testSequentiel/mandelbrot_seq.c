@@ -109,6 +109,7 @@ void free_colormap(colormap_t *colmap) {
  */
 void *mandelbrot(void *arg) {
 
+    // création du objet type param_worker qui contiendra les infos contenue dans le param master
     Param_worker *data_mand = (Param_worker*) arg;
     double x1 = data_mand->p->xc - data_mand->p->size;
     double x2 = data_mand->p->xc + data_mand->p->size;
@@ -130,7 +131,19 @@ void *mandelbrot(void *arg) {
 	for ( i = 0; i < HEIGHT; i++) {
 		double x =blocID*ratio*dx*WIDTH+ x1;
         int j;
-		for ( j = blocID*tailleBloc; j <blocID*tailleBloc+tailleBloc ; j++) {
+        int a;
+        if(blocID==data_mand->NbBloc-1)
+        {
+            //Si on a atteind le dernier bloc a calculer on stocke WIDTH dans a
+            a=WIDTH;
+        }
+        else
+        {
+            //Sinon a est égal blocID*tailleBloc+tailleBloc
+            a=blocID*tailleBloc+tailleBloc;
+        }
+        // on initialise j à la valeur de départ du bloc
+		for ( j = blocID*tailleBloc; j <a ; j++) {
 			double zx = 0;
 			double zy = 0;
 			uint32 color = COLOR(0,0,0);
@@ -152,19 +165,13 @@ void *mandelbrot(void *arg) {
 		y += dy;
 
 		// Every 32 lines: present surface to screen and check keyboard
-            if (i % 32 == 0) {
 			gfx_present(data_mand->surface);
 			if (gfx_is_esc_pressed()) {
 				return;
 			}
-		}
 	}
-	/*while (!gfx_is_esc_pressed()) {
-		usleep(100000);  // Check every 0.1 sec.
-	}*/
         blocID = getIndex(data_mand->NbBloc);
     }
-    //system("PAUSE");
 }
 
 void* master_func(void *arg) {
@@ -172,29 +179,37 @@ void* master_func(void *arg) {
     Param_master *data = (Param_master*) arg;
 
     shared_index = 0;
-    // Tab creation of data_worker base on a struct
-    Param_worker data_worker;
-    data_worker.p = data->p; // we send his Params_st
-    data_worker.colmap = data->colmap; // same with colmap
-    data_worker.surface = data->surface; // and the surface
-    data_worker.NbBloc=data->Nbblocks;
-    // Memory for workers' thread
 
-    pthread_t *thread_worker = (pthread_t*) malloc(data->workers * sizeof (pthread_t));    // Creation of thread workers
+    Param_worker data_worker;
+    data_worker.p = data->p;// on remplis le parametre Params_t par celui initialiser plus haut (p)
+    data_worker.colmap = data->colmap; // on remplis le parametre colmap par celui initialiser plus haut
+    data_worker.surface = data->surface; // on remplis le parametre surface par celui initialiser plus haut
+    data_worker.NbBloc=data->Nbblocks;  // on remplis le parametre NbBblocks avec le nombre de block
+
+    // allocation de la memoire pour les threads worker
+    pthread_t *thread_worker = (pthread_t*) malloc(data->workers * sizeof (pthread_t));
 	int i;
     for(i=0;i<data->workers;i++)
     {
-        //mandelbrot(surface, &colmap, &p,i,NBloc);
+        // Creation des threads workers
         pthread_create(&thread_worker[i],NULL,mandelbrot,&data_worker);
     }
     for(i=0;i<data->workers;i++)
-    {        //mandelbrot(surface, &colmap, WIDTH, HEIGHT, &p,i,NBloc);
+    {
+        // join des threads workers
         pthread_join(thread_worker[i],NULL);
     }
-    //free(thread_worker);
-
-
+    //Liberation de la mémoier
     free(thread_worker);
+
+        FILE *stream ;
+    if((stream = freopen("file.txt", "w", stdout)) == NULL)
+      exit(-1);
+    int temps =SDL_GetTicks();
+    printf("Il faut %d ms pour calculer le total",temps);
+    stream = freopen("CON", "w", stdout);
+    printf("Il faut %d ms pour calculer le total",temps);
+    system("PAUSE");
 }
 /**
  * Program's entry point.
@@ -203,20 +218,19 @@ void* master_func(void *arg) {
  * @return status code.
  */
 int main(int argc, char **argv) {
-    int n;
-    printf("Entrer un nombre de thread");
-    scanf("%d", n);
-	colormap_t colmap;
-    create_colormap(&colmap);
+	colormap_t colmap; // instenciation d'un colormap
+    create_colormap(&colmap); // remplissage des attribut du colormap
 
-	// Rendering surface
+    freopen("CON", "w", stdout);
+    freopen("CON", "w", stderr);
+
+	    // création d'une nouvelle surface avec en parametre la taille définit dans les defines.
 	SURFACE *surface = gfx_init("Mandelbrot", WIDTH, HEIGHT);
 	if (surface == NULL) {
 		fprintf(stderr, "Failed initializing video mode!\n");
 		return EXIT_FAILURE;
 	}
-
-	// Mandelbrot computation parameters
+    // Mandelbrot parameters
 	params_t p = {
 		0.2929859127507,
 		0.6117848324958,
@@ -244,12 +258,13 @@ int main(int argc, char **argv) {
 
 
 	*/
-    pthread_t thread_master;
+    pthread_t thread_master; // thread master
 
+    // création d'un param master qui contiendra le nombre de bloc, le nombre de worker
 	Param_master *param_master = malloc(sizeof (Param_master));
 
-	param_master->workers= 2;
-	param_master->Nbblocks=10;
+	param_master->workers= 25;  // définit le nombre de thread worker
+	param_master->Nbblocks=674;  // définit le nombre de bloc
 	param_master->p = &p;
     param_master->colmap = &colmap;
     param_master->surface = surface;
@@ -260,6 +275,6 @@ int main(int argc, char **argv) {
 	gfx_close();
 
 	free_colormap(&colmap);
-
+    free(param_master);
 	return EXIT_SUCCESS;
 }
