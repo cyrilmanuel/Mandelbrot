@@ -165,10 +165,14 @@ void *mandelbrot(void *arg) {
 		y += dy;
 
 		// Every 32 lines: present surface to screen and check keyboard
-			gfx_present(data_mand->surface);
+		if(i%32==0)
+        {
+            gfx_present(data_mand->surface);
 			if (gfx_is_esc_pressed()) {
 				return;
 			}
+        }
+
 	}
         blocID = getIndex(data_mand->NbBloc);
     }
@@ -209,7 +213,7 @@ void* master_func(void *arg) {
     printf("Il faut %d ms pour calculer le total",temps);
     stream = freopen("CON", "w", stdout);
     printf("Il faut %d ms pour calculer le total",temps);
-    system("PAUSE");
+    //system("PAUSE");
 }
 /**
  * Program's entry point.
@@ -237,13 +241,13 @@ int main(int argc, char **argv) {
 		1.0E-11,
 		8000,
 		0.9 };
-	/*
+
 	// Classic coordinates
 	params_t r = {
 		-0.65,
 		-0.0,
 		1.2,
-		150,
+		1500,
 		10 };
 
 
@@ -257,21 +261,23 @@ int main(int argc, char **argv) {
 		0.35 };
 
 
-	*/
+
     pthread_t thread_master; // thread master
 
     // création d'un param master qui contiendra le nombre de bloc, le nombre de worker
 	Param_master *param_master = malloc(sizeof (Param_master));
 
-	param_master->workers= 25;  // définit le nombre de thread worker
-	param_master->Nbblocks=674;  // définit le nombre de bloc
-	param_master->p = &p;
+	param_master->workers= 2;  // définit le nombre de thread worker
+	param_master->Nbblocks=100;  // définit le nombre de bloc
+	param_master->p = &r;
     param_master->colmap = &colmap;
     param_master->surface = surface;
 
     pthread_create(&thread_master,NULL,master_func,param_master);
     pthread_join(thread_master,NULL);
 
+    gfx_present(surface);
+    system("PAUSE");
 	gfx_close();
 
 	free_colormap(&colmap);

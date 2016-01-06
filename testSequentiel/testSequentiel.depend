@@ -286,7 +286,7 @@
 	<stdbool.h>
 	<SDL/SDL.h>
 
-1452098971 source:c:\users\damien.gygi\documents\programmation concurrente\labos\labo1\testsequentiel\mandelbrot_seq.c
+1452100486 source:c:\users\damien.gygi\documents\programmation concurrente\labos\labo1\testsequentiel\mandelbrot_seq.c
 	"gfx.h"
 	<pthread.h>
 	<stdio.h>
