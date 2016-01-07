@@ -291,7 +291,7 @@ int main(int argc, char **argv) {
     {
         exit(0);
     }
-	param_master->p = &q;
+	param_master->p = &r;
     param_master->colmap = &colmap;
     param_master->surface = surface;
 
