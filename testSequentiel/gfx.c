@@ -59,7 +59,6 @@ SURFACE *gfx_init(char *title, int width, int height) {
 		printf("Unable to initialize SDL!\n");
 		return NULL;
 	}
-
 	// HACK: software surfaces shouldn't require locking
 	SURFACE *surface = SDL_SetVideoMode(width, height, DEPTH, SDL_SWSURFACE);
 	if (surface == NULL) {

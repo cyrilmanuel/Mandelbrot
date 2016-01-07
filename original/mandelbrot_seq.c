@@ -161,7 +161,7 @@ void* exit_esc(void* arg) {
 void* present_25hz(void* arg) {
     while (1) {
         SURFACE *surface = (SURFACE*) arg;
-        usleep(400000); // Check every 0.4 sec. (25 Hz)
+        usleep(1); // Check every 0.4 sec. (25 Hz)
         gfx_present(surface);
     }
 }
@@ -319,7 +319,7 @@ int main(int argc, char** argv) {
     pthread_t master; // Master thread
 
     param_master->width_img = WIDTH; // Define the width of the img
-    param_master->workers =  5; // Define the number of workers
+    param_master->workers =  1; // Define the number of workers
     param_master->blocks = 50; // Define the number of blocks
 
     // Creation of the thread which is checking for the ESC
@@ -391,7 +391,8 @@ int main(int argc, char** argv) {
     while(leave != 1){
     	usleep(10);
     }
-
+    gfx_present(surface);
+    system("PAUSE");
     gfx_close();
     free_colormap(&colmap);
     return 0;

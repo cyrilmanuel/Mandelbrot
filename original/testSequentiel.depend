@@ -343,3 +343,21 @@
 1341003174 c:\program files (x86)\codeblocks\mingw\include\math.h
 	<_mingw.h>
 
+1452100651 source:c:\users\jc\desktop\programmation_concurente\labos\mandelbrot\original\gfx.c
+	"gfx.h"
+
+1452100651 c:\users\jc\desktop\programmation_concurente\labos\mandelbrot\original\gfx.h
+	<unistd.h>
+	<time.h>
+	<stdbool.h>
+	<SDL/SDL.h>
+
+1452103769 source:c:\users\jc\desktop\programmation_concurente\labos\mandelbrot\original\mandelbrot_seq.c
+	"gfx.h"
+	<pthread.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<time.h>
+	<math.h>
+

@@ -1,1 +1,1 @@
-3094
+Il faut 101090 ms pour calculer le total avec 300 Thread et 400 blocs

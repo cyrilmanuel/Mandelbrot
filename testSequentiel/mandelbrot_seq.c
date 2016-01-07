@@ -38,6 +38,7 @@ struct colormap_st {
 };
 typedef struct colormap_st colormap_t;
 
+//structure que l'on passera comme argument au Boss
 struct Param_master {
     int workers;
     int Nbblocks;
@@ -47,6 +48,7 @@ struct Param_master {
 };
 typedef struct Param_master Param_master;
 
+//structure que l'on passera comme argument au travailleur
 struct Param_worker {
     int NbBloc;
     params_t *p;
@@ -55,16 +57,16 @@ struct Param_worker {
 };
 typedef struct Param_worker Param_worker;
 
+// la variable de block qui sera partagé par nos thread.
 int  CountBlock= 0;
 
-pthread_mutex_t lock;
+//création d'une semaphore
 sem_t mutex;
 
-int getIndex(int blocks) {
+int getBlockID(int blocks) {
     sem_wait(&mutex);
     int tmp = CountBlock;
     if (CountBlock < blocks) {
-	printf("%d -- ", CountBlock);
 	CountBlock++;
     sem_post(&mutex);
         return tmp;
@@ -121,7 +123,8 @@ void *mandelbrot(void *arg) {
 	double dx = (x2 - x1) / WIDTH;
 	double dy = (y2 - y1) / HEIGHT;
 
-    int blocID = getIndex(data_mand->NbBloc);
+    //récupération du blocID depuis la ressource partager.
+    int blocID = getBlockID(data_mand->NbBloc);
 
     while ((blocID < data_mand->NbBloc)) {
 	double y = y1;
@@ -166,6 +169,8 @@ void *mandelbrot(void *arg) {
 		}
 		y += dy;
 
+
+
 		// Every 32 lines: present surface to screen and check keyboard
 		if(i%32==0)
         {
@@ -176,7 +181,7 @@ void *mandelbrot(void *arg) {
         }
 
 	}
-        blocID = getIndex(data_mand->NbBloc);
+        blocID = getBlockID(data_mand->NbBloc);
     }
 }
 
@@ -205,16 +210,16 @@ void* master_func(void *arg) {
         // join des threads workers
         pthread_join(thread_worker[i],NULL);
     }
-    //Liberation de la mémoir
+    //Liberation de la mémoire
     free(thread_worker);
 
         FILE *stream ;
     if((stream = freopen("file.txt", "w", stdout)) == NULL)
       exit(-1);
     int temps =SDL_GetTicks();
-    printf("Il faut %d ms pour calculer le total",temps);
+    printf("Il faut %d ms pour calculer le total avec %d Thread et %d blocs",temps,data->workers,data->Nbblocks);
     stream = freopen("CON", "w", stdout);
-    printf("Il faut %d ms pour calculer le total",temps);
+    printf("Il faut %d ms pour calculer le total avec %d Thread et %d blocs",temps,data->workers,data->Nbblocks);
 }
 /**
  * Program's entry point.
@@ -226,8 +231,6 @@ int main(int argc, char **argv) {
 	colormap_t colmap; // instenciation d'un colormap
     create_colormap(&colmap); // remplissage des attribut du colormap
 
-    freopen("CON", "w", stdout);
-    freopen("CON", "w", stderr);
 
 	    // création d'une nouvelle surface avec en parametre la taille définit dans les defines.
 	SURFACE *surface = gfx_init("Mandelbrot", WIDTH, HEIGHT);
@@ -279,11 +282,13 @@ int main(int argc, char **argv) {
     pthread_join(thread_master,NULL);
 
 
-    gfx_present(surface);
-    system("PAUSE");
+free_colormap(&colmap);
+    free(param_master);
+
+    gfx_present(surface);  // afin d'afficher la derniere partie calculé de la mandelbrot
+    system("PAUSE"); // si non présent, le programme plante et quit directement.
 	gfx_close();
 
-	free_colormap(&colmap);
-    free(param_master);
+
 	return EXIT_SUCCESS;
 }
