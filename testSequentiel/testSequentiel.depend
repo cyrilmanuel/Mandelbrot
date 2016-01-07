@@ -360,3 +360,22 @@
 	<stdbool.h>
 	<SDL/SDL.h>
 
+1452152818 source:c:\users\damien.gygi\documents\programmation concurrente\labos\mandelbrot\testsequentiel\gfx.c
+	"gfx.h"
+
+1452152818 c:\users\damien.gygi\documents\programmation concurrente\labos\mandelbrot\testsequentiel\gfx.h
+	<unistd.h>
+	<time.h>
+	<stdbool.h>
+	<SDL/SDL.h>
+
+1452159033 source:c:\users\damien.gygi\documents\programmation concurrente\labos\mandelbrot\testsequentiel\mandelbrot_seq.c
+	"gfx.h"
+	<pthread.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<time.h>
+	<math.h>
+	<semaphore.h>
+

@@ -1,0 +1,1 @@
+Il faut 5913 ms pour calculer le total avec 60 Thread et 120 blocs

@@ -39,6 +39,7 @@ struct colormap_st {
 typedef struct colormap_st colormap_t;
 
 //structure que l'on passera comme argument au Boss
+//Besoin d'une structure car l'on ne peut passer seulement 1 paramètre au thread
 struct Param_master {
     int workers;
     int Nbblocks;
@@ -64,12 +65,14 @@ int  CountBlock= 0;
 sem_t mutex;
 
 int getBlockID(int blocks) {
+    //On bloque l'accès à la ressource partagé
     sem_wait(&mutex);
     int tmp = CountBlock;
+    //Si le numéro de bloc est inférieur au nombre maximum de bloc
     if (CountBlock < blocks) {
 	CountBlock++;
-    sem_post(&mutex);
-        return tmp;
+    sem_post(&mutex);// incrémentation de la variable et libération de la resource partagé
+        return tmp; //On retourne tmp qui indiquera a Mandelbrotle bloc à calculer
     }
     sem_post(&mutex);
     return tmp;
@@ -113,7 +116,7 @@ void free_colormap(colormap_t *colmap) {
  */
 void *mandelbrot(void *arg) {
 
-    // création du objet type param_worker qui contiendra les infos contenue dans le param master
+    // création du objet type param_worker qui contiendra les infos contenu dans le param master
     Param_worker *data_mand = (Param_worker*) arg;
     double x1 = data_mand->p->xc - data_mand->p->size;
     double x2 = data_mand->p->xc + data_mand->p->size;
@@ -123,23 +126,23 @@ void *mandelbrot(void *arg) {
 	double dx = (x2 - x1) / WIDTH;
 	double dy = (y2 - y1) / HEIGHT;
 
-    //récupération du blocID depuis la ressource partager.
+    //récupération du blocID ( Numéro de bloc à calculer et affficher)
     int blocID = getBlockID(data_mand->NbBloc);
 
-    while ((blocID < data_mand->NbBloc)) {
-	double y = y1;
+    while ((blocID < data_mand->NbBloc)) { // Temps que l'on a pas atteinds le dernier bloc execute la boucle
+	double y = y1;                         //blocID est mis à jour à la fin des calculs
 
     int i;
-    double ratio = 1.0 / data_mand->NbBloc;
+    double ratio = 1.0 / data_mand->NbBloc; //On définit un ratio pour ne dessiner que
 
-    double tailleBloc=WIDTH/data_mand->NbBloc;
+    double tailleBloc=WIDTH/data_mand->NbBloc; //On calcul la taille d'un bloc
 	for ( i = 0; i < HEIGHT; i++) {
 		double x =blocID*ratio*dx*WIDTH+ x1;
         int j;
-        int a;
+        int a;// Variable pour la boucle for
         if(blocID==data_mand->NbBloc-1)
         {
-            //Si on a atteind le dernier bloc a calculer on stocke WIDTH dans a
+            //Si on a atteind le dernier bloc à calculer on stocke WIDTH dans a
             a=WIDTH;
         }
         else
@@ -148,7 +151,7 @@ void *mandelbrot(void *arg) {
             a=blocID*tailleBloc+tailleBloc;
         }
         // on initialise j à la valeur de départ du bloc
-		for ( j = blocID*tailleBloc; j <a ; j++) {
+		for ( j = blocID*tailleBloc; j <a ; j++) { // boucle définnissant le début et la fin du bloc en pixel
 			double zx = 0;
 			double zy = 0;
 			uint32 color = COLOR(0,0,0);
@@ -203,20 +206,28 @@ void* master_func(void *arg) {
     for(i=0;i<data->workers;i++)
     {
         // Creation des threads workers
-        pthread_create(&thread_worker[i],NULL,mandelbrot,&data_worker);
+        if (pthread_create(&thread_worker[i],NULL,mandelbrot,&data_worker)!=0)
+        {
+            fprintf(stderr, "Erreur dans la creation du worker\n");
+            return EXIT_FAILURE;
+        }
     }
     for(i=0;i<data->workers;i++)
     {
         // join des threads workers
-        pthread_join(thread_worker[i],NULL);
+        if (pthread_join(thread_worker[i],NULL)!=0)
+        {
+            fprintf(stderr, "Erreur dans le join du worker\n");
+            return EXIT_FAILURE;
+        }
     }
     //Liberation de la mémoire
     free(thread_worker);
 
-        FILE *stream ;
-    if((stream = freopen("file.txt", "w", stdout)) == NULL)
+        FILE *stream ; //Ecriture du temps dans le fichier temps.txt
+    if((stream = freopen("temps.txt", "w", stdout)) == NULL)
       exit(-1);
-    int temps =SDL_GetTicks();
+    int temps =SDL_GetTicks(); //Retourne le temps depuis le lancement du programme
     printf("Il faut %d ms pour calculer le total avec %d Thread et %d blocs",temps,data->workers,data->Nbblocks);
     stream = freopen("CON", "w", stdout);
     printf("Il faut %d ms pour calculer le total avec %d Thread et %d blocs",temps,data->workers,data->Nbblocks);
@@ -228,7 +239,7 @@ void* master_func(void *arg) {
  * @return status code.
  */
 int main(int argc, char **argv) {
-	colormap_t colmap; // instenciation d'un colormap
+	colormap_t colmap; // Instanciation  d'un colormap
     create_colormap(&colmap); // remplissage des attribut du colormap
 
 
@@ -271,18 +282,31 @@ int main(int argc, char **argv) {
 
     // création d'un param master qui contiendra le nombre de bloc, le nombre de worker
 	Param_master *param_master = malloc(sizeof (Param_master));
-
-	param_master->workers= atoi(argv[1]);  // définit le nombre de thread worker
+    if(atoi(argv[1])>0 && atoi(argv[2])>0 && atoi(argv[1])<=atoi(argv[2]))//Test si valeur OK
+    {
+	param_master->workers= atoi(argv[1]);  // définit le nombre de thread worker en récupérant l'argument passer en parametre
 	param_master->Nbblocks=atoi(argv[2]);  // définit le nombre de bloc
-	param_master->p = &r;
+    }
+    else
+    {
+        exit(0);
+    }
+	param_master->p = &q;
     param_master->colmap = &colmap;
     param_master->surface = surface;
 
-    pthread_create(&thread_master,NULL,master_func,param_master);
-    pthread_join(thread_master,NULL);
+    if (pthread_create(&thread_master,NULL,master_func,param_master) != 0) {
+        fprintf(stderr, "Erreur dans la creation du thread\n");
+        return EXIT_FAILURE;
+    }
+    if (pthread_join(thread_master,NULL)!=0)
+    {
+        fprintf(stderr, "Erreur dans le join du thread\n");
+        return EXIT_FAILURE;
+    }
 
 
-free_colormap(&colmap);
+    free_colormap(&colmap);
     free(param_master);
 
     gfx_present(surface);  // afin d'afficher la derniere partie calculé de la mandelbrot
